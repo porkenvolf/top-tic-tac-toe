@@ -24,7 +24,10 @@ const game = (function () {
     loop = function () {
         while (state === "play") {
             render();
-            makeMove(promptActivePlayer());
+            const move = promptActivePlayer();
+            if (checkMoveLegality(move)) continue;
+            makeMove(move);
+            updateGameState(move);
             changeActivePlayer();
         }
     };
@@ -34,11 +37,36 @@ const game = (function () {
         const row = prompt(`${string} ROW number: `);
         return { col, row };
     };
+    checkMoveLegality = function ({ col, row }) {
+        const move = { col, row };
+        let error = false;
+        for (const key in move) {
+            if (
+                move[key] > board.length || //move is out of bounds
+                move[key] < 0 || //move is out of bounds
+                isNaN(+move[key]) || //move is not a number
+                board[row][col] !== " " //move is trying to overwrite another move
+            ) {
+                error = true;
+            }
+        }
+        return error;
+    };
     makeMove = function ({ col, row }) {
         board[row][col] = activePlayer;
+        return { col, row };
     };
     changeActivePlayer = function () {
         activePlayer = activePlayer === "x" ? "o" : "x";
+    };
+    updateGameState = function ({ col, row }) {
+        const directions = [
+            { col: 1, row: 0 },
+            { col: 0, row: 1 },
+            { col: 1, row: 1 },
+            { col: 1, row: -1 },
+        ];
+        // const dsa = board[4][4];
     };
     render = function () {
         console.clear();
@@ -50,4 +78,6 @@ const game = (function () {
         loop,
     };
 })();
-game.loop();
+if (typeof window === "undefined") {
+    game.loop();
+}
