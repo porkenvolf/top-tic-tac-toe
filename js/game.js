@@ -18,6 +18,7 @@ const newBoard = function (rows, cols) {
 
 const game = (function () {
     const board = newBoard(3, 3);
+    let freeSpace = board.length ** 2;
     const wincon = 3;
     let state = "play"; // or 'win' or 'tie
     let activePlayer = "x";
@@ -25,14 +26,19 @@ const game = (function () {
     loop = function () {
         while (state === "play") {
             render();
+            changeActivePlayer();
             const move = promptActivePlayer();
             if (checkMoveLegality(move, [0, 1, 2, 3])) continue; //if false skips rest of block execution
             makeMove(move);
             updateGameState(move);
-            changeActivePlayer();
         }
         if (state === "win") {
+            render();
             console.log(`The WINNER is Player '${activePlayer}'`);
+        }
+        if (state === "draw") {
+            render();
+            console.log(`The game ended in a DRAW`);
         }
     };
     promptActivePlayer = function () {
@@ -45,15 +51,18 @@ const game = (function () {
         const move = { col, row };
         let error = false;
         const errorConditions = [
+            "isNaN(+move[key]) || move[key] ===''",
             "move[key] >= board.length",
             "move[key] < 0",
-            "isNaN(+move[key])",
             'board[row][col] !== " "',
         ];
 
         for (const key in move) {
             for (const key1 in errorConditions) {
                 if (checks.includes(+key1) && eval(errorConditions[key1])) {
+                    //yes, yes, I know. NEVER use eval() right?
+                    //...b, but, it's inside a private scope!
+                    //it's UNREACHABLE. Like Frusciante's song.
                     error = true;
                     return error;
                 }
@@ -63,6 +72,7 @@ const game = (function () {
     };
     makeMove = function ({ col, row }) {
         board[row][col] = activePlayer;
+        freeSpace -= 1;
         return { col, row };
     };
     changeActivePlayer = function () {
@@ -84,13 +94,16 @@ const game = (function () {
                     col: directions[key].col * i + Number(move.col),
                     row: directions[key].row * i + Number(move.row),
                 };
-                if (!checkMoveLegality(check, [0, 1])) {
+                if (!checkMoveLegality(check, [1, 2])) {
                     if (board[check.row][check.col] === activePlayer) {
                         count += 1;
                     }
                 }
                 if (count === wincon) {
                     state = "win";
+                    return;
+                } else if (freeSpace === 0) {
+                    state = "draw";
                     return;
                 }
             }
