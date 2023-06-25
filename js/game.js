@@ -26,11 +26,11 @@ const game = (function () {
     loop = function () {
         while (state === "play") {
             render();
-            changeActivePlayer();
             const move = promptActivePlayer();
             if (checkMoveLegality(move, [0, 1, 2, 3])) continue; //if false skips rest of block execution
             makeMove(move);
             updateGameState(move);
+            if (state === "play") changeActivePlayer();
         }
         if (state === "win") {
             render();
