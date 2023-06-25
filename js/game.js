@@ -17,7 +17,8 @@ const newBoard = function (rows, cols) {
 };
 
 const game = (function () {
-    let board = newBoard(3, 3);
+    const board = newBoard(3, 3);
+    const wincon = 3;
     let state = "play"; // or 'win' or 'tie
     let activePlayer = "x";
 
@@ -25,10 +26,13 @@ const game = (function () {
         while (state === "play") {
             render();
             const move = promptActivePlayer();
-            if (checkMoveLegality(move)) continue;
+            if (checkMoveLegality(move, [0, 1, 2, 3])) continue; //if false skips rest of block execution
             makeMove(move);
             updateGameState(move);
             changeActivePlayer();
+        }
+        if (state === "win") {
+            console.log(`The WINNER is Player '${activePlayer}'`);
         }
     };
     promptActivePlayer = function () {
@@ -37,17 +41,22 @@ const game = (function () {
         const row = prompt(`${string} ROW number: `);
         return { col, row };
     };
-    checkMoveLegality = function ({ col, row }) {
+    checkMoveLegality = function ({ col, row }, checks) {
         const move = { col, row };
         let error = false;
+        const errorConditions = [
+            "move[key] >= board.length",
+            "move[key] < 0",
+            "isNaN(+move[key])",
+            'board[row][col] !== " "',
+        ];
+
         for (const key in move) {
-            if (
-                move[key] > board.length || //move is out of bounds
-                move[key] < 0 || //move is out of bounds
-                isNaN(+move[key]) || //move is not a number
-                board[row][col] !== " " //move is trying to overwrite another move
-            ) {
-                error = true;
+            for (const key1 in errorConditions) {
+                if (checks.includes(+key1) && eval(errorConditions[key1])) {
+                    error = true;
+                    return error;
+                }
             }
         }
         return error;
@@ -66,7 +75,26 @@ const game = (function () {
             { col: 1, row: 1 },
             { col: 1, row: -1 },
         ];
-        // const dsa = board[4][4];
+        const move = { col, row };
+
+        for (const key in directions) {
+            let count = 0;
+            for (let i = -wincon + 1; i < wincon; i++) {
+                const check = {
+                    col: directions[key].col * i + Number(move.col),
+                    row: directions[key].row * i + Number(move.row),
+                };
+                if (!checkMoveLegality(check, [0, 1])) {
+                    if (board[check.row][check.col] === activePlayer) {
+                        count += 1;
+                    }
+                }
+                if (count === wincon) {
+                    state = "win";
+                    return;
+                }
+            }
+        }
     };
     render = function () {
         console.clear();
