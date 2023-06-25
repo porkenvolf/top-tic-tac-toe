@@ -21,9 +21,9 @@ const game = (function () {
     let freeSpace = board.length ** 2;
     const wincon = 3;
     let state = "play"; // or 'win' or 'tie
-    let activePlayer = "x";
+    let activePlayer = "X";
 
-    loop = function () {
+    run = function () {
         while (state === "play") {
             render();
             const move = promptActivePlayer();
@@ -60,9 +60,6 @@ const game = (function () {
         for (const key in move) {
             for (const key1 in errorConditions) {
                 if (checks.includes(+key1) && eval(errorConditions[key1])) {
-                    //yes, yes, I know. NEVER use eval() right?
-                    //...b, but, it's inside a private scope!
-                    //it's UNREACHABLE. Like Frusciante's song.
                     error = true;
                     return error;
                 }
@@ -76,7 +73,7 @@ const game = (function () {
         return { col, row };
     };
     changeActivePlayer = function () {
-        activePlayer = activePlayer === "x" ? "o" : "x";
+        activePlayer = activePlayer === "X" ? "O" : "X";
     };
     updateGameState = function ({ col, row }) {
         const directions = [
@@ -116,9 +113,7 @@ const game = (function () {
         console.table(board);
     };
     return {
-        loop,
+        run,
     };
 })();
-if (typeof window === "undefined") {
-    game.loop();
-}
+if (typeof window === "undefined") game.run();
