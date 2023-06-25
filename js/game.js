@@ -60,6 +60,9 @@ const game = (function () {
         for (const key in move) {
             for (const key1 in errorConditions) {
                 if (checks.includes(+key1) && eval(errorConditions[key1])) {
+                    //yes, yes, I know. NEVER use eval() right?
+                    //...b, but, it's inside a private scope!
+                    //it's UNREACHABLE. Like Frusciante's song.
                     error = true;
                     return error;
                 }
