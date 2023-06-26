@@ -4,13 +4,23 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <script src="./js/game.js" defer></script>
+        <script src="./js/footer.js" defer></script>
+        <link rel="stylesheet" href="./css/style.css" />
         <title>Document</title>
     </head>
-    <body>
-        <ol>
-            <li>Open console F12</li>
-            <li>Type game.run()</li>
-            <li>Press Enter</li>
-        </ol>
+    <body class="dark">
+        <div class="container">
+            <header>Tic-Tac-Toe</header>
+            <div id="game"></div>
+            <footer>
+                <small>
+                    &copy; Copyright <span id="firstYear">2023</span> -
+                    <span id="currentYear"></span>
+                    <a href="https://github.com/porkenvolf" target="”_blank”">
+                        Porkenvölf
+                    </a>
+                </small>
+            </footer>
+        </div>
     </body>
 </html>

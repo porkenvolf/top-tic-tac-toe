@@ -28,7 +28,7 @@ const game = (function () {
             render();
             const move = promptActivePlayer();
             if (checkMoveLegality(move, [0, 1, 2, 3])) continue; //if false skips rest of block execution
-            makeMove(move);
+            placeToken(move);
             updateGameState(move);
             if (state === "play") changeActivePlayer();
         }
@@ -41,6 +41,7 @@ const game = (function () {
             console.log(`The game ended in a DRAW`);
         }
     };
+
     promptActivePlayer = function () {
         const string = `Player '${activePlayer}', Enter`;
         const col = prompt(`${string} COLUMN number: `);
@@ -70,10 +71,15 @@ const game = (function () {
         }
         return error;
     };
-    makeMove = function ({ col, row }) {
+    placeToken = function ({ col, row }) {
         board[row][col] = activePlayer;
         freeSpace -= 1;
         return { col, row };
+    };
+    makeMove = function ({ col, row }) {
+        placeToken({ col, row });
+        updateGameState({ col, row });
+        changeActivePlayer();
     };
     changeActivePlayer = function () {
         activePlayer = activePlayer === "X" ? "O" : "X";
@@ -110,13 +116,62 @@ const game = (function () {
         }
     };
     render = function () {
-        console.clear();
+        //console.clear();
         console.log("TIC-TAC-TOE!");
         console.log(`State: ${state}`);
         console.table(board);
     };
+    getBoard = function () {
+        return board;
+    };
     return {
         run,
+        getBoard,
+        makeMove,
+        render,
     };
 })();
+
+const displayController = (function () {
+    const divGame = document.querySelector("#game");
+    let cells = [];
+
+    init = function () {
+        const board = game.getBoard();
+        const rows = board.length;
+        const cols = board[0].length;
+        console.table(board);
+        for (let i = 1; i <= cols * rows; i++) {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.setAttribute("data-col", (i + 2) % cols);
+            cell.setAttribute("data-row", Math.floor((i - 1) / cols));
+            divGame.appendChild(cell);
+        }
+        cells = document.querySelectorAll(".cell");
+        divGame.style.display = "grid";
+        divGame.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+        divGame.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+    };
+    bindEvents = function () {
+        cells.forEach((element) => {
+            element.addEventListener("click", (event) => {
+                const col = event.target.getAttribute("data-col");
+                const row = event.target.getAttribute("data-row");
+                game.makeMove({ col, row });
+                game.render();
+                render();
+            });
+        });
+    };
+    render = function () {
+        const board = game.getBoard().flat();
+        for (let i = 0; i < board.length; i++) {
+            cells[i].innerText = board[i];
+        }
+    };
+    init();
+    bindEvents();
+})();
+
 if (typeof window === "undefined") game.run();
