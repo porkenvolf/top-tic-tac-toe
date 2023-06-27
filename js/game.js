@@ -3,6 +3,38 @@ if (typeof window === "undefined") {
     var prompt = require("prompt-sync")({ sigint: true });
 }
 
+/* 
+█▀▄ █ █ ██▄ ▄▀▀ █ █ ██▄ 
+█▀  ▀▄█ █▄█ ▄█▀ ▀▄█ █▄█  */
+/* https://gist.github.com/learncodeacademy/777349747d8382bfb722 */
+var events = {
+    events: {},
+    on: function (eventName, fn) {
+        this.events[eventName] = this.events[eventName] || [];
+        this.events[eventName].push(fn);
+    },
+    off: function (eventName, fn) {
+        if (this.events[eventName]) {
+            for (var i = 0; i < this.events[eventName].length; i++) {
+                if (this.events[eventName][i] === fn) {
+                    this.events[eventName].splice(i, 1);
+                    break;
+                }
+            }
+        }
+    },
+    emit: function (eventName, data) {
+        if (this.events[eventName]) {
+            this.events[eventName].forEach(function (fn) {
+                fn(data);
+            });
+        }
+    },
+};
+
+/* 
+██▄ ▄▀▄ ▄▀▄ █▀▄ █▀▄ 
+█▄█ ▀▄▀ █▀█ █▀▄ █▄▀  */
 const newBoard = function (rows, cols) {
     //INIT
     const board = [];
@@ -16,6 +48,9 @@ const newBoard = function (rows, cols) {
     return board;
 };
 
+/* 
+▄▀  ▄▀▄ █▄ ▄█ ██▀ 
+▀▄█ █▀█ █ ▀ █ █▄▄  */
 const game = (function () {
     const board = newBoard(3, 3);
     let freeSpace = board.length ** 2;
@@ -23,11 +58,11 @@ const game = (function () {
     let state = "play"; // or 'win' or 'tie
     let activePlayer = "X";
 
-    run = function () {
+    const run = function () {
         while (state === "play") {
             render();
             const move = promptActivePlayer();
-            if (checkMoveLegality(move, [0, 1, 2, 3])) continue; //if false skips rest of block execution
+            if (checkMoveLegality(move, [0, 1, 2, 3, 4])) continue; //if false skips rest of block execution
             placeToken(move);
             updateGameState(move);
             if (state === "play") changeActivePlayer();
@@ -42,13 +77,13 @@ const game = (function () {
         }
     };
 
-    promptActivePlayer = function () {
+    const promptActivePlayer = function () {
         const string = `Player '${activePlayer}', Enter`;
         const col = prompt(`${string} COLUMN number: `);
         const row = prompt(`${string} ROW number: `);
         return { col, row };
     };
-    checkMoveLegality = function ({ col, row }, checks) {
+    const checkMoveLegality = function ({ col, row }, checks) {
         const move = { col, row };
         let error = false;
         const errorConditions = [
@@ -56,6 +91,7 @@ const game = (function () {
             "move[key] >= board.length",
             "move[key] < 0",
             'board[row][col] !== " "',
+            'state==="win"',
         ];
 
         for (const key in move) {
@@ -71,20 +107,24 @@ const game = (function () {
         }
         return error;
     };
-    placeToken = function ({ col, row }) {
+    const placeToken = function ({ col, row }) {
         board[row][col] = activePlayer;
         freeSpace -= 1;
+
+        events.emit("boardChanged", board);
         return { col, row };
     };
-    makeMove = function ({ col, row }) {
-        placeToken({ col, row });
-        updateGameState({ col, row });
-        changeActivePlayer();
+    const makeMove = function ({ col, row }) {
+        if (!checkMoveLegality({ col, row }, [0, 1, 2, 3, 4])) {
+            placeToken({ col, row });
+            updateGameState({ col, row });
+            if (state === "play") changeActivePlayer();
+        }
     };
-    changeActivePlayer = function () {
+    const changeActivePlayer = function () {
         activePlayer = activePlayer === "X" ? "O" : "X";
     };
-    updateGameState = function ({ col, row }) {
+    const updateGameState = function ({ col, row }) {
         const directions = [
             { col: 1, row: 0 },
             { col: 0, row: 1 },
@@ -115,13 +155,13 @@ const game = (function () {
             }
         }
     };
-    render = function () {
-        //console.clear();
+    const render = function () {
+        console.clear();
         console.log("TIC-TAC-TOE!");
         console.log(`State: ${state}`);
         console.table(board);
     };
-    getBoard = function () {
+    const getBoard = function () {
         return board;
     };
     return {
@@ -132,46 +172,57 @@ const game = (function () {
     };
 })();
 
-const displayController = (function () {
-    const divGame = document.querySelector("#game");
-    let cells = [];
+/* 
+█▄ █ ▄▀▄ █▀▄ ██▀   █ ▄▀▀    █ █ ▄▀▀    ██▄ █▀▄ ▄▀▄ █   █ ▄▀▀ ██▀ █▀▄ 
+█ ▀█ ▀▄▀ █▄▀ █▄▄ ▀▄█ ▄█▀    ▀▄▀ ▄█▀    █▄█ █▀▄ ▀▄▀ ▀▄▀▄▀ ▄█▀ █▄▄ █▀▄  */
+if (typeof window === "undefined") {
+    game.run();
+} else {
+    /* 
+█▀▄ █ ▄▀▀ █▀▄ █   ▄▀▄ ▀▄▀    ▄▀▀ ▄▀▄ █▄ █ ▀█▀ █▀▄ ▄▀▄ █   █   ██▀ █▀▄ 
+█▄▀ █ ▄█▀ █▀  █▄▄ █▀█  █     ▀▄▄ ▀▄▀ █ ▀█  █  █▀▄ ▀▄▀ █▄▄ █▄▄ █▄▄ █▀▄  */
+    const displayController = (function () {
+        const divGame = document.querySelector("#game");
+        let cells = [];
 
-    init = function () {
-        const board = game.getBoard();
-        const rows = board.length;
-        const cols = board[0].length;
-        console.table(board);
-        for (let i = 1; i <= cols * rows; i++) {
-            const cell = document.createElement("div");
-            cell.classList.add("cell");
-            cell.setAttribute("data-col", (i + 2) % cols);
-            cell.setAttribute("data-row", Math.floor((i - 1) / cols));
-            divGame.appendChild(cell);
-        }
-        cells = document.querySelectorAll(".cell");
-        divGame.style.display = "grid";
-        divGame.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-        divGame.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-    };
-    bindEvents = function () {
-        cells.forEach((element) => {
-            element.addEventListener("click", (event) => {
-                const col = event.target.getAttribute("data-col");
-                const row = event.target.getAttribute("data-row");
-                game.makeMove({ col, row });
-                game.render();
-                render();
+        const init = function () {
+            const board = game.getBoard();
+            const rows = board.length;
+            const cols = board[0].length;
+            for (let i = 1; i <= cols * rows; i++) {
+                const cell = document.createElement("div");
+                cell.classList.add("cell");
+                cell.setAttribute("data-col", (i + cols - 1) % cols);
+                cell.setAttribute("data-row", Math.floor((i - 1) / cols));
+                divGame.appendChild(cell);
+            }
+            cells = document.querySelectorAll(".cell");
+            divGame.style.display = "grid";
+            divGame.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            divGame.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+        };
+        const bindEvents = function () {
+            //PUBSUB
+            events.on("boardChanged", render);
+
+            //CELLS
+            cells.forEach((element) => {
+                element.addEventListener("click", (event) => {
+                    const col = event.target.getAttribute("data-col");
+                    const row = event.target.getAttribute("data-row");
+                    game.makeMove({ col, row });
+                });
             });
-        });
-    };
-    render = function () {
-        const board = game.getBoard().flat();
-        for (let i = 0; i < board.length; i++) {
-            cells[i].innerText = board[i];
-        }
-    };
-    init();
-    bindEvents();
-})();
-
-if (typeof window === "undefined") game.run();
+        };
+        const render = function () {
+            game.render();
+            const board = game.getBoard().flat();
+            for (let i = 0; i < board.length; i++) {
+                cells[i].innerText = board[i];
+            }
+        };
+        init();
+        bindEvents();
+        return {};
+    })();
+}
