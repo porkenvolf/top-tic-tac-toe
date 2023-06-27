@@ -58,23 +58,23 @@ const game = (function () {
     let state = "play"; // or 'win' or 'tie
     let activePlayer = "X";
 
-    const run = function () {
-        while (state === "play") {
-            render();
-            const move = promptActivePlayer();
-            if (checkMoveLegality(move, [0, 1, 2, 3, 4])) continue; //if false skips rest of block execution
-            placeToken(move);
-            updateGameState(move);
-            if (state === "play") changeActivePlayer();
-        }
-        if (state === "win") {
-            render();
-            console.log(`The WINNER is Player '${activePlayer}'`);
-        }
-        if (state === "draw") {
-            render();
-            console.log(`The game ended in a DRAW`);
-        }
+    const play = function () {
+        render();
+        const move = promptActivePlayer();
+        if (checkMoveLegality(move, [0, 1, 2, 3, 4])) return; //if false skips rest of block execution
+        placeToken(move);
+        updateGameState(move);
+        changeActivePlayer();
+    };
+    const win = function () {
+        state = "win";
+        render();
+        console.log(`The WINNER is Player '${activePlayer}'`);
+    };
+    const draw = function () {
+        state = "draw";
+        render();
+        console.log(`The game ended in a DRAW`);
     };
 
     const promptActivePlayer = function () {
@@ -114,7 +114,7 @@ const game = (function () {
         events.emit("boardChanged", board);
         return { col, row };
     };
-    const makeMove = function ({ col, row }) {
+    const UI_play = function ({ col, row }) {
         if (!checkMoveLegality({ col, row }, [0, 1, 2, 3, 4])) {
             placeToken({ col, row });
             updateGameState({ col, row });
@@ -146,10 +146,12 @@ const game = (function () {
                     }
                 }
                 if (count === wincon) {
-                    state = "win";
+                    //state = "win";
+                    events.emit("stateWin");
                     return;
                 } else if (freeSpace === 0) {
-                    state = "draw";
+                    //state = "draw";
+                    events.emit("stateDraw");
                     return;
                 }
             }
@@ -164,10 +166,15 @@ const game = (function () {
     const getBoard = function () {
         return board;
     };
+
+    events.on("statePlay", play);
+    events.on("stateWin", win);
+    events.on("stateDraw", draw);
+
     return {
-        run,
+        play,
         getBoard,
-        makeMove,
+        UI_play,
         render,
     };
 })();
@@ -210,7 +217,7 @@ if (typeof window === "undefined") {
                 element.addEventListener("click", (event) => {
                     const col = event.target.getAttribute("data-col");
                     const row = event.target.getAttribute("data-row");
-                    game.makeMove({ col, row });
+                    game.UI_play({ col, row });
                 });
             });
         };
