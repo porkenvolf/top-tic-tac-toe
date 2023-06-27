@@ -1,3 +1,3 @@
 # top-tic-tac-toe
 
--   work on wincon detection
+-   rework font size according to cols

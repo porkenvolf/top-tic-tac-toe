@@ -52,9 +52,9 @@ const newBoard = function (rows, cols) {
 ▄▀  ▄▀▄ █▄ ▄█ ██▀ 
 ▀▄█ █▀█ █ ▀ █ █▄▄  */
 const game = (function () {
-    const board = newBoard(3, 3);
+    const board = newBoard(30, 30);
     let freeSpace = board.length ** 2;
-    const wincon = 3;
+    const wincon = 10;
     let state = "play"; // or 'win' or 'tie
     let activePlayer = "X";
 
@@ -115,11 +115,14 @@ const game = (function () {
         return { col, row };
     };
     const UI_play = function ({ col, row }) {
-        if (!checkMoveLegality({ col, row }, [0, 1, 2, 3, 4])) {
+        const legal = !checkMoveLegality({ col, row }, [0, 1, 2, 3, 4]);
+        const player = activePlayer;
+        if (legal) {
             placeToken({ col, row });
             updateGameState({ col, row });
             if (state === "play") changeActivePlayer();
         }
+        return legal ? player : legal;
     };
     const changeActivePlayer = function () {
         activePlayer = activePlayer === "X" ? "O" : "X";
@@ -166,6 +169,9 @@ const game = (function () {
     const getBoard = function () {
         return board;
     };
+    const getActivePlayer = function () {
+        return activePlayer;
+    };
 
     events.on("statePlay", play);
     events.on("stateWin", win);
@@ -174,6 +180,7 @@ const game = (function () {
     return {
         play,
         getBoard,
+        getActivePlayer,
         UI_play,
         render,
     };
@@ -201,10 +208,10 @@ if (typeof window === "undefined") {
                 cell.classList.add("cell");
                 cell.setAttribute("data-col", (i + cols - 1) % cols);
                 cell.setAttribute("data-row", Math.floor((i - 1) / cols));
+                cell.style.fontSize = `${30 / cols ** 1.3}rem`;
                 divGame.appendChild(cell);
             }
             cells = document.querySelectorAll(".cell");
-            divGame.style.display = "grid";
             divGame.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
             divGame.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
         };
@@ -217,7 +224,7 @@ if (typeof window === "undefined") {
                 element.addEventListener("click", (event) => {
                     const col = event.target.getAttribute("data-col");
                     const row = event.target.getAttribute("data-row");
-                    game.UI_play({ col, row });
+                    player = game.UI_play({ col, row });
                 });
             });
         };
@@ -226,6 +233,8 @@ if (typeof window === "undefined") {
             const board = game.getBoard().flat();
             for (let i = 0; i < board.length; i++) {
                 cells[i].innerText = board[i];
+                if (cells[i].innerText)
+                    cells[i].classList.add(cells[i].innerText);
             }
         };
         init();

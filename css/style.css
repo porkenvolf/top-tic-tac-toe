@@ -1,7 +1,10 @@
 @import "./themes.css";
 @import "./equalize.css";
 @import "./modal.css";
-
+@import url("https://fonts.googleapis.com/css2?family=Indie+Flower&family=Roboto:wght@300;400;500;700&display=swap");
+:root {
+    font-size: 2.5vw;
+}
 body {
     display: flex;
     flex-direction: column;
@@ -33,6 +36,7 @@ body {
     background-color: var(--border);
     grid-gap: 2px;
     margin: 20px;
+    display: grid;
 }
 .container #game .cell {
     aspect-ratio: 1/1;
@@ -41,7 +45,15 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    font-family: "Indie Flower", cursive;
+    font-size: 80%;
 }
 .container #game .cell:hover {
     background-color: var(--light-bg);
+}
+.container #game .cell.O {
+    color: rgb(255, 117, 117);
+}
+.container #game .cell.X {
+    color: rgb(108, 158, 250);
 }
