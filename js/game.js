@@ -52,19 +52,25 @@ const newBoard = function (rows, cols) {
 ▄▀  ▄▀▄ █▄ ▄█ ██▀ 
 ▀▄█ █▀█ █ ▀ █ █▄▄  */
 const game = (function () {
-    const board = newBoard(30, 30);
+    const board = newBoard(3, 3);
     let freeSpace = board.length ** 2;
-    const wincon = 10;
+    const wincon = 3;
     let state = "play"; // or 'win' or 'tie
     let activePlayer = "X";
 
-    const play = function () {
-        render();
-        const move = promptActivePlayer();
-        if (checkMoveLegality(move, [0, 1, 2, 3, 4])) return; //if false skips rest of block execution
-        placeToken(move);
-        updateGameState(move);
-        changeActivePlayer();
+    const play = function (_move) {
+        while (state === "play") {
+            render();
+            const move = _move ? _move : promptActivePlayer();
+            const legal = !checkMoveLegality(move, [0, 1, 2, 3, 4]);
+            const player = activePlayer;
+            if (legal) {
+                placeToken(move);
+                updateGameState(move);
+                if (state === "play") changeActivePlayer();
+            }
+            if (_move) return legal ? player : legal;
+        }
     };
     const win = function () {
         state = "win";
@@ -114,16 +120,6 @@ const game = (function () {
         events.emit("boardChanged", board);
         return { col, row };
     };
-    const UI_play = function ({ col, row }) {
-        const legal = !checkMoveLegality({ col, row }, [0, 1, 2, 3, 4]);
-        const player = activePlayer;
-        if (legal) {
-            placeToken({ col, row });
-            updateGameState({ col, row });
-            if (state === "play") changeActivePlayer();
-        }
-        return legal ? player : legal;
-    };
     const changeActivePlayer = function () {
         activePlayer = activePlayer === "X" ? "O" : "X";
     };
@@ -172,6 +168,7 @@ const game = (function () {
     const getActivePlayer = function () {
         return activePlayer;
     };
+    const ai = function () {};
 
     events.on("statePlay", play);
     events.on("stateWin", win);
@@ -181,7 +178,6 @@ const game = (function () {
         play,
         getBoard,
         getActivePlayer,
-        UI_play,
         render,
     };
 })();
@@ -190,7 +186,7 @@ const game = (function () {
 █▄ █ ▄▀▄ █▀▄ ██▀   █ ▄▀▀    █ █ ▄▀▀    ██▄ █▀▄ ▄▀▄ █   █ ▄▀▀ ██▀ █▀▄ 
 █ ▀█ ▀▄▀ █▄▀ █▄▄ ▀▄█ ▄█▀    ▀▄▀ ▄█▀    █▄█ █▀▄ ▀▄▀ ▀▄▀▄▀ ▄█▀ █▄▄ █▀▄  */
 if (typeof window === "undefined") {
-    game.run();
+    game.play();
 } else {
     /* 
 █▀▄ █ ▄▀▀ █▀▄ █   ▄▀▄ ▀▄▀    ▄▀▀ ▄▀▄ █▄ █ ▀█▀ █▀▄ ▄▀▄ █   █   ██▀ █▀▄ 
@@ -208,7 +204,7 @@ if (typeof window === "undefined") {
                 cell.classList.add("cell");
                 cell.setAttribute("data-col", (i + cols - 1) % cols);
                 cell.setAttribute("data-row", Math.floor((i - 1) / cols));
-                cell.style.fontSize = `${30 / cols ** 1.3}rem`;
+                cell.style.fontSize = `${40 / cols}em`;
                 divGame.appendChild(cell);
             }
             cells = document.querySelectorAll(".cell");
@@ -224,7 +220,7 @@ if (typeof window === "undefined") {
                 element.addEventListener("click", (event) => {
                     const col = event.target.getAttribute("data-col");
                     const row = event.target.getAttribute("data-row");
-                    player = game.UI_play({ col, row });
+                    player = game.play({ col, row });
                 });
             });
         };
