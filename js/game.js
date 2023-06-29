@@ -47,7 +47,26 @@ const newBoard = function (rows, cols) {
     }
     return board;
 };
-
+/* 
+█▀▄ █   ▄▀▄ ▀▄▀ ██▀ █▀▄ 
+█▀  █▄▄ █▀█  █  █▄▄ █▀▄  */
+const newPlayer = function (_name, _token, _ai) {
+    const name = _name;
+    const token = _token;
+    const ai = _ai ? _ai : false;
+    return { name, token, ai };
+};
+/* 
+▄▀▄ █ 
+█▀█ █  */
+const ai = (function () {
+    const random = function () {
+        const col = Math.floor(Math.random() * 3);
+        const row = Math.floor(Math.random() * 3);
+        return { col, row };
+    };
+    return { random };
+})();
 /* 
 ▄▀  ▄▀▄ █▄ ▄█ ██▀ 
 ▀▄█ █▀█ █ ▀ █ █▄▄  */
@@ -56,26 +75,38 @@ const game = (function () {
     let freeSpace = board.length ** 2;
     const wincon = 3;
     let state = "play"; // or 'win' or 'tie
-    let activePlayer = "X";
+    const amountPlayers = 2;
+    const player1 = newPlayer("wako", "X");
+    const player2 = newPlayer("ai", "O", ai.random);
 
-    const play = function (_move) {
+    let activePlayer = player1;
+
+    const play = function (_move, _fromUI) {
         while (state === "play") {
             render();
-            const move = _move ? _move : promptActivePlayer();
-            const legal = !checkMoveLegality(move, [0, 1, 2, 3, 4]);
             const player = activePlayer;
+            let move;
+            if (player.ai) {
+                move = player.ai();
+            } else {
+                move = _move ? _move : promptActivePlayer();
+            }
+
+            console.log(move);
+            const legal = !checkMoveLegality(move, [0, 1, 2, 3, 4]);
             if (legal) {
                 placeToken(move);
                 updateGameState(move);
                 if (state === "play") changeActivePlayer();
             }
-            if (_move) return legal ? player : legal;
+            if (activePlayer === player1 && _fromUI)
+                return legal ? player : legal;
         }
     };
     const win = function () {
         state = "win";
         render();
-        console.log(`The WINNER is Player '${activePlayer}'`);
+        console.log(`The WINNER is Player '${activePlayer.token}'`);
     };
     const draw = function () {
         state = "draw";
@@ -84,7 +115,7 @@ const game = (function () {
     };
 
     const promptActivePlayer = function () {
-        const string = `Player '${activePlayer}', Enter`;
+        const string = `Player '${activePlayer.token}', Enter`;
         const col = prompt(`${string} COLUMN number: `);
         const row = prompt(`${string} ROW number: `);
         return { col, row };
@@ -114,14 +145,14 @@ const game = (function () {
         return error;
     };
     const placeToken = function ({ col, row }) {
-        board[row][col] = activePlayer;
+        board[row][col] = activePlayer.token;
         freeSpace -= 1;
 
         events.emit("boardChanged", board);
         return { col, row };
     };
     const changeActivePlayer = function () {
-        activePlayer = activePlayer === "X" ? "O" : "X";
+        activePlayer = activePlayer === player1 ? player2 : player1;
     };
     const updateGameState = function ({ col, row }) {
         const directions = [
@@ -140,16 +171,14 @@ const game = (function () {
                     row: directions[key].row * i + Number(move.row),
                 };
                 if (!checkMoveLegality(check, [1, 2])) {
-                    if (board[check.row][check.col] === activePlayer) {
+                    if (board[check.row][check.col] === activePlayer.token) {
                         count += 1;
                     }
                 }
                 if (count === wincon) {
-                    //state = "win";
                     events.emit("stateWin");
                     return;
                 } else if (freeSpace === 0) {
-                    //state = "draw";
                     events.emit("stateDraw");
                     return;
                 }
@@ -157,7 +186,7 @@ const game = (function () {
         }
     };
     const render = function () {
-        console.clear();
+        //console.clear();
         console.log("TIC-TAC-TOE!");
         console.log(`State: ${state}`);
         console.table(board);
@@ -168,9 +197,6 @@ const game = (function () {
     const getActivePlayer = function () {
         return activePlayer;
     };
-    const ai = function () {};
-
-    events.on("statePlay", play);
     events.on("stateWin", win);
     events.on("stateDraw", draw);
 
@@ -220,7 +246,7 @@ if (typeof window === "undefined") {
                 element.addEventListener("click", (event) => {
                     const col = event.target.getAttribute("data-col");
                     const row = event.target.getAttribute("data-row");
-                    player = game.play({ col, row });
+                    player = game.play({ col, row }, true);
                 });
             });
         };
