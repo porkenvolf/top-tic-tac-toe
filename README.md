@@ -1,3 +1,5 @@
 # top-tic-tac-toe
 
--   rework font size according to cols
+-   adjust resizing window in y axis
+-   BUG: first play with console open crashes. Render?
+-   Optimize

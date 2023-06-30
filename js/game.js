@@ -59,25 +59,91 @@ const newPlayer = function (_name, _token, _ai) {
 /* 
 ▄▀▄ █ 
 █▀█ █  */
-const ai = (function () {
-    const random = function () {
-        const col = Math.floor(Math.random() * 3);
-        const row = Math.floor(Math.random() * 3);
-        return { col, row };
+function ai_random() {
+    const col = Math.floor(Math.random() * game.getBoard()[0].length);
+    const row = Math.floor(Math.random() * game.getBoard().length);
+    return { col, row };
+}
+function ai_unbeatable(board) {
+    let bestScore = -Infinity;
+    let bestMove;
+
+    for (let row = 0; row < 3; row++) {
+        for (let col = 0; col < 3; col++) {
+            if (board[row][col] === " ") {
+                board[row][col] = "O";
+                const score = minimax(board, 0, false, row, col);
+                board[row][col] = " "; // Undo the move
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMove = { row, col };
+                }
+            }
+        }
+    }
+
+    return bestMove;
+}
+function minimax(board, depth, maximizingPlayer, row, col) {
+    const scores = {
+        X: -10,
+        O: 10,
+        draw: 0,
     };
-    return { random };
-})();
+
+    const result = game.checkWinner(board, { col, row });
+
+    if (result.state === "win") {
+        return scores[result.player];
+    } else if (result.state === "draw") {
+        return scores[result.state];
+    }
+
+    if (maximizingPlayer) {
+        let bestScore = -Infinity;
+
+        for (let row = 0; row < 3; row++) {
+            for (let col = 0; col < 3; col++) {
+                if (board[row][col] === " ") {
+                    board[row][col] = "O";
+                    const score = minimax(board, depth + 1, false, row, col);
+                    board[row][col] = " "; // Undo the move
+                    bestScore = Math.max(score, bestScore);
+                }
+            }
+        }
+
+        return bestScore;
+    } else {
+        let bestScore = Infinity;
+
+        for (let row = 0; row < 3; row++) {
+            for (let col = 0; col < 3; col++) {
+                if (board[row][col] === " ") {
+                    board[row][col] = "X";
+                    const score = minimax(board, depth + 1, true, row, col);
+                    board[row][col] = " "; // Undo the move
+                    bestScore = Math.min(score, bestScore);
+                }
+            }
+        }
+
+        return bestScore;
+    }
+}
+
 /* 
 ▄▀  ▄▀▄ █▄ ▄█ ██▀ 
 ▀▄█ █▀█ █ ▀ █ █▄▄  */
 const game = (function () {
     const board = newBoard(3, 3);
-    let freeSpace = board.length ** 2;
+    let freeSpace = board.length * board[0].length;
     const wincon = 3;
     let state = "play"; // or 'win' or 'tie
     const amountPlayers = 2;
     const player1 = newPlayer("wako", "X");
-    const player2 = newPlayer("ai", "O", ai.random);
+    const player2 = newPlayer("ai", "O", ai_unbeatable);
 
     let activePlayer = player1;
 
@@ -85,18 +151,22 @@ const game = (function () {
         while (state === "play") {
             render();
             const player = activePlayer;
-            let move;
+            let move = { col: "", row: "" };
             if (player.ai) {
-                move = player.ai();
+                const ai_output = player.ai(board);
+                move.col = ai_output.col;
+                move.row = ai_output.row;
             } else {
                 move = _move ? _move : promptActivePlayer();
             }
 
-            console.log(move);
             const legal = !checkMoveLegality(move, [0, 1, 2, 3, 4]);
             if (legal) {
                 placeToken(move);
-                updateGameState(move);
+                const newState = checkWinner(board, move);
+                if (newState.state === "win" || newState.state === "draw") {
+                    events.emit(newState.state);
+                }
                 if (state === "play") changeActivePlayer();
             }
             if (activePlayer === player1 && _fromUI)
@@ -113,7 +183,6 @@ const game = (function () {
         render();
         console.log(`The game ended in a DRAW`);
     };
-
     const promptActivePlayer = function () {
         const string = `Player '${activePlayer.token}', Enter`;
         const col = prompt(`${string} COLUMN number: `);
@@ -125,7 +194,7 @@ const game = (function () {
         let error = false;
         const errorConditions = [
             "isNaN(+move[key]) || move[key] ===''",
-            "move[key] >= board.length",
+            "move.row >= board.length || move.col >= board[0].length",
             "move[key] < 0",
             'board[row][col] !== " "',
             'state==="win"',
@@ -134,6 +203,7 @@ const game = (function () {
         for (const key in move) {
             for (const key1 in errorConditions) {
                 if (checks.includes(+key1) && eval(errorConditions[key1])) {
+                    //console.log(errorConditions[key1]);
                     //yes, yes, I know. NEVER use eval() right?
                     //...b, but, it's inside a private scope!
                     //it's UNREACHABLE. Like Frusciante's song.
@@ -154,7 +224,7 @@ const game = (function () {
     const changeActivePlayer = function () {
         activePlayer = activePlayer === player1 ? player2 : player1;
     };
-    const updateGameState = function ({ col, row }) {
+    const checkWinner = function (board, { col, row }) {
         const directions = [
             { col: 1, row: 0 },
             { col: 0, row: 1 },
@@ -162,6 +232,13 @@ const game = (function () {
             { col: 1, row: -1 },
         ];
         const move = { col, row };
+        const playerToken = board[move.row][move.col];
+        let fullBoard = true;
+        for (const key in board) {
+            if (board[key].includes(" ")) {
+                fullBoard = false;
+            }
+        }
 
         for (const key in directions) {
             let count = 0;
@@ -171,22 +248,25 @@ const game = (function () {
                     row: directions[key].row * i + Number(move.row),
                 };
                 if (!checkMoveLegality(check, [1, 2])) {
-                    if (board[check.row][check.col] === activePlayer.token) {
+                    if (
+                        board[check.row][check.col] ===
+                        board[move.row][move.col]
+                    ) {
                         count += 1;
                     }
                 }
                 if (count === wincon) {
-                    events.emit("stateWin");
-                    return;
-                } else if (freeSpace === 0) {
-                    events.emit("stateDraw");
-                    return;
+                    return { state: "win", player: playerToken };
                 }
             }
         }
+        if (fullBoard) {
+            return { state: "draw", player: playerToken };
+        }
+        return { state: "play" };
     };
     const render = function () {
-        //console.clear();
+        console.clear();
         console.log("TIC-TAC-TOE!");
         console.log(`State: ${state}`);
         console.table(board);
@@ -194,15 +274,20 @@ const game = (function () {
     const getBoard = function () {
         return board;
     };
+    const getState = function () {
+        return state;
+    };
     const getActivePlayer = function () {
         return activePlayer;
     };
-    events.on("stateWin", win);
-    events.on("stateDraw", draw);
+    events.on("win", win);
+    events.on("draw", draw);
 
     return {
         play,
+        checkWinner,
         getBoard,
+        getState,
         getActivePlayer,
         render,
     };
@@ -230,7 +315,7 @@ if (typeof window === "undefined") {
                 cell.classList.add("cell");
                 cell.setAttribute("data-col", (i + cols - 1) % cols);
                 cell.setAttribute("data-row", Math.floor((i - 1) / cols));
-                cell.style.fontSize = `${40 / cols}em`;
+                cell.style.fontSize = `${70 / cols}em`;
                 divGame.appendChild(cell);
             }
             cells = document.querySelectorAll(".cell");

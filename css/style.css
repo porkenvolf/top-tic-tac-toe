@@ -34,7 +34,8 @@ body {
     grid-gap: 2px;
     margin: 20px;
     display: grid;
-    font-size: 1vw;
+
+    font-size: min(1vw, 1vh);
 }
 .container #game .cell {
     aspect-ratio: 1/1;
