@@ -97,8 +97,8 @@ function ai_unbeatable(board) {
 }
 function minimax(board, depth, maximizingPlayer, row, col) {
     const scores = {
-        X: -10,
-        O: 10,
+        X: -10 + depth,
+        O: 10 - depth,
         draw: 0,
     };
 
