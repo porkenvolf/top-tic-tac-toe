@@ -31,6 +31,16 @@ var events = {
         }
     },
 };
+/* 
+▀█▀ █ █▄ ▄█ ██▀ █▀▄ 
+ █  █ █ ▀ █ █▄▄ █▀▄  */
+var timer = {
+    timers: {},
+    timeFunction: (func) => {
+        console.log(func.name);
+        return func;
+    },
+};
 
 /* 
 ██▄ ▄▀▄ ▄▀▄ █▀▄ █▀▄ 
@@ -218,13 +228,16 @@ const game = (function () {
         board[row][col] = activePlayer.token;
         freeSpace -= 1;
 
-        events.emit("boardChanged", board);
+        events.emit("boardChanged");
         return { col, row };
     };
     const changeActivePlayer = function () {
         activePlayer = activePlayer === player1 ? player2 : player1;
     };
     const checkWinner = function (board, { col, row }) {
+        if (board.length === 3) {
+            return checkWinner3x3(board);
+        }
         const directions = [
             { col: 1, row: 0 },
             { col: 0, row: 1 },
@@ -263,7 +276,52 @@ const game = (function () {
         if (fullBoard) {
             return { state: "draw", player: playerToken };
         }
+
         return { state: "play" };
+    };
+    const checkWinner3x3 = function (board) {
+        /*https://editor.p5js.org/codingtrain/sketches/0zyUhZdJD*/
+        function equals3(a, b, c) {
+            return a == b && b == c && a != " ";
+        }
+        let winner = null;
+        //rows
+        for (let i = 0; i < board.length; i++) {
+            if (equals3(board[i][0], board[i][1], board[i][2])) {
+                winner = { state: "win", player: board[i][0] };
+            }
+        }
+        //cols
+        for (let i = 0; i < board.length; i++) {
+            if (equals3(board[0][i], board[1][i], board[2][i])) {
+                winner = { state: "win", player: board[0][i] };
+            }
+        }
+        //diags
+        if (equals3(board[0][0], board[1][1], board[2][2])) {
+            winner = { state: "win", player: board[0][0] };
+        }
+        if (equals3(board[2][0], board[1][1], board[0][2])) {
+            winner = { state: "win", player: board[2][0] };
+        }
+
+        //return
+        let openSpots = 0;
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (board[i][j] == " ") {
+                    openSpots++;
+                }
+            }
+        }
+
+        if (winner == null && openSpots == 0) {
+            return { state: "draw" };
+        } else if (winner == null && openSpots != 0) {
+            return { state: "play" };
+        } else {
+            return winner;
+        }
     };
     const render = function () {
         console.clear();
