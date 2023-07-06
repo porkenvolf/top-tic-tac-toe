@@ -147,16 +147,25 @@ function minimax(board, depth, maximizingPlayer, row, col) {
 ▄▀  ▄▀▄ █▄ ▄█ ██▀ 
 ▀▄█ █▀█ █ ▀ █ █▄▄  */
 const game = (function () {
-    const board = newBoard(3, 3);
-    let freeSpace = board.length * board[0].length;
-    const wincon = 3;
-    let state = "play"; // or 'win' or 'tie
-    const amountPlayers = 2;
-    const player1 = newPlayer("wako", "X");
-    const player2 = newPlayer("ai", "O", ai_unbeatable);
-
-    let activePlayer = player1;
-
+    let board;
+    let freeSpace;
+    let wincon;
+    let state;
+    let amountPlayers;
+    let player1;
+    let player2;
+    let activePlayer;
+    reset();
+    function reset() {
+        board = newBoard(3, 3);
+        freeSpace = board.length * board[0].length;
+        wincon = 3;
+        state = "play"; // or 'win' or 'tie
+        amountPlayers = 2;
+        player1 = newPlayer("wako", "X");
+        player2 = newPlayer("ai", "O", ai_unbeatable);
+        activePlayer = player1;
+    }
     const play = function (_move, _fromUI) {
         while (state === "play") {
             render();
@@ -348,6 +357,7 @@ const game = (function () {
         getState,
         getActivePlayer,
         render,
+        reset,
     };
 })();
 
@@ -362,12 +372,18 @@ if (typeof window === "undefined") {
 █▄▀ █ ▄█▀ █▀  █▄▄ █▀█  █     ▀▄▄ ▀▄▀ █ ▀█  █  █▀▄ ▀▄▀ █▄▄ █▄▄ █▄▄ █▀▄  */
     const displayController = (function () {
         const divGame = document.querySelector("#game");
+        const btnReset = document.querySelector("#reset");
         let cells = [];
 
         const init = function () {
             const board = game.getBoard();
             const rows = board.length;
             const cols = board[0].length;
+
+            cells.forEach((element) => {
+                element.remove();
+            });
+
             for (let i = 1; i <= cols * rows; i++) {
                 const cell = document.createElement("div");
                 cell.classList.add("cell");
@@ -379,10 +395,6 @@ if (typeof window === "undefined") {
             cells = document.querySelectorAll(".cell");
             divGame.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
             divGame.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-        };
-        const bindEvents = function () {
-            //PUBSUB
-            events.on("boardChanged", render);
 
             //CELLS
             cells.forEach((element) => {
@@ -391,6 +403,15 @@ if (typeof window === "undefined") {
                     const row = event.target.getAttribute("data-row");
                     player = game.play({ col, row }, true);
                 });
+            });
+        };
+        const bindEvents = function () {
+            //PUBSUB
+            events.on("boardChanged", render);
+
+            //RESET
+            btnReset.addEventListener("click", () => {
+                reset();
             });
         };
         const render = function () {
@@ -402,6 +423,10 @@ if (typeof window === "undefined") {
                     cells[i].classList.add(cells[i].innerText);
             }
         };
+        function reset() {
+            game.reset();
+            init();
+        }
         init();
         bindEvents();
         return {};
