@@ -151,6 +151,7 @@ const game = (function () {
     let freeSpace;
     let wincon;
     let state;
+    let endGameMsg;
     let amountPlayers;
     let player1;
     let player2;
@@ -195,12 +196,14 @@ const game = (function () {
     const win = function () {
         state = "win";
         render();
-        console.log(`The WINNER is Player '${activePlayer.token}'`);
+        endGameMsg = `The WINNER is Player '${activePlayer.token}'`;
+        console.log(endGameMsg);
     };
     const draw = function () {
         state = "draw";
         render();
-        console.log(`The game ended in a DRAW`);
+        endGameMsg = `The game ended in a DRAW`;
+        console.log(endGameMsg);
     };
     const promptActivePlayer = function () {
         const string = `Player '${activePlayer.token}', Enter`;
@@ -247,6 +250,9 @@ const game = (function () {
         if (board.length === 3) {
             return checkWinner3x3(board);
         }
+
+        //This was meant for not having to check the whole board in bigger boards.
+        //Slower in 3x3
         const directions = [
             { col: 1, row: 0 },
             { col: 0, row: 1 },
@@ -347,6 +353,9 @@ const game = (function () {
     const getActivePlayer = function () {
         return activePlayer;
     };
+    function getEndGameMsg() {
+        return endGameMsg;
+    }
     events.on("win", win);
     events.on("draw", draw);
 
@@ -356,6 +365,7 @@ const game = (function () {
         getBoard,
         getState,
         getActivePlayer,
+        getEndGameMsg,
         render,
         reset,
     };
@@ -373,6 +383,8 @@ if (typeof window === "undefined") {
     const displayController = (function () {
         const divGame = document.querySelector("#game");
         const btnReset = document.querySelector("#reset");
+        const divMsg = document.querySelector("#msg");
+        const divPanel = document.querySelector("#panel");
         let cells = [];
 
         const init = function () {
@@ -408,6 +420,15 @@ if (typeof window === "undefined") {
         const bindEvents = function () {
             //PUBSUB
             events.on("boardChanged", render);
+            events.on("win", endGameMsg);
+            events.on("draw", endGameMsg);
+            function endGameMsg() {
+                const msg = document.createElement("div");
+                msg.classList.add("msg");
+                msg.innerText = game.getEndGameMsg();
+                msg.style.cssText = `background-color: var(--${game.getState()})`;
+                divPanel.appendChild(msg);
+            }
 
             //RESET
             btnReset.addEventListener("click", () => {
@@ -425,6 +446,10 @@ if (typeof window === "undefined") {
         };
         function reset() {
             game.reset();
+            const msgs = document.querySelectorAll(".msg");
+            msgs.forEach((element) => {
+                element.remove();
+            });
             init();
         }
         init();

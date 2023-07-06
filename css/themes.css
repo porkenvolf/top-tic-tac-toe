@@ -9,6 +9,8 @@ html {
     --border: #363f4b;
     --text: #d1d5db;
     --text2: #9c9fa4;
-
     --primary: rgb(255, 0, 119);
+
+    --win: rgb(42, 128, 111);
+    --draw: rgb(76, 90, 117);
 }

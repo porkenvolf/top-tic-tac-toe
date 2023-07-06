@@ -22,7 +22,22 @@ body {
     gap: 10px;
     width: min(100%, 800px);
 }
+.container #panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: min(70vh, 70vw);
+    gap: 10px;
+    flex-wrap: wrap;
+}
+#panel .msg {
+    text-align: center;
+    flex: 1 0 100%;
+    padding: 10px;
+    border-radius: 5px;
+}
 .container button {
+    flex: 1 0 auto;
     font-size: 1.5rem;
     border: 2px solid var(--border);
     border-radius: 5px;
