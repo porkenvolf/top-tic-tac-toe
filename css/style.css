@@ -73,7 +73,10 @@ body {
     justify-content: center;
     align-items: center;
     font-family: "Indie Flower", cursive;
-    font-size: 80%;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 .container #game .cell:hover {
     background-color: var(--light-bg);

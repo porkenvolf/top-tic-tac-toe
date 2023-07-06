@@ -31,16 +31,6 @@ var events = {
         }
     },
 };
-/* 
-▀█▀ █ █▄ ▄█ ██▀ █▀▄ 
- █  █ █ ▀ █ █▄▄ █▀▄  */
-var timer = {
-    timers: {},
-    timeFunction: (func) => {
-        console.log(func.name);
-        return func;
-    },
-};
 
 /* 
 ██▄ ▄▀▄ ▄▀▄ █▀▄ █▀▄ 
@@ -174,6 +164,7 @@ const game = (function () {
             let move = { col: "", row: "" };
             if (player.ai) {
                 const ai_output = player.ai(board);
+
                 move.col = ai_output.col;
                 move.row = ai_output.row;
             } else {
@@ -239,7 +230,6 @@ const game = (function () {
     function placeToken({ col, row }) {
         board[row][col] = activePlayer.token;
         freeSpace -= 1;
-
         events.emit("boardChanged");
         return { col, row };
     }
@@ -356,6 +346,7 @@ const game = (function () {
     function getEndGameMsg() {
         return endGameMsg;
     }
+
     events.on("win", win);
     events.on("draw", draw);
 
@@ -438,6 +429,9 @@ if (typeof window === "undefined") {
         }
         function render() {
             game.render();
+            if (game.getActivePlayer().ai) {
+                console.log(game.getActivePlayer());
+            }
             const board = game.getBoard().flat();
             for (let i = 0; i < board.length; i++) {
                 cells[i].innerText = board[i];
@@ -453,6 +447,7 @@ if (typeof window === "undefined") {
             });
             init();
         }
+
         init();
         bindEvents();
         return {};
