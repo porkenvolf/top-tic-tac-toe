@@ -167,7 +167,7 @@ const game = (function () {
         player2 = newPlayer("ai", "O", ai_unbeatable);
         activePlayer = player1;
     }
-    const play = function (_move, _fromUI) {
+    function play(_move, _fromUI) {
         while (state === "play") {
             render();
             const player = activePlayer;
@@ -192,26 +192,26 @@ const game = (function () {
             if (activePlayer === player1 && _fromUI)
                 return legal ? player : legal;
         }
-    };
-    const win = function () {
+    }
+    function win() {
         state = "win";
         render();
         endGameMsg = `The WINNER is Player '${activePlayer.token}'`;
         console.log(endGameMsg);
-    };
-    const draw = function () {
+    }
+    function draw() {
         state = "draw";
         render();
         endGameMsg = `The game ended in a DRAW`;
         console.log(endGameMsg);
-    };
-    const promptActivePlayer = function () {
+    }
+    function promptActivePlayer() {
         const string = `Player '${activePlayer.token}', Enter`;
         const col = prompt(`${string} COLUMN number: `);
         const row = prompt(`${string} ROW number: `);
         return { col, row };
-    };
-    const checkMoveLegality = function ({ col, row }, checks) {
+    }
+    function checkMoveLegality({ col, row }, checks) {
         const move = { col, row };
         let error = false;
         const errorConditions = [
@@ -235,18 +235,18 @@ const game = (function () {
             }
         }
         return error;
-    };
-    const placeToken = function ({ col, row }) {
+    }
+    function placeToken({ col, row }) {
         board[row][col] = activePlayer.token;
         freeSpace -= 1;
 
         events.emit("boardChanged");
         return { col, row };
-    };
-    const changeActivePlayer = function () {
+    }
+    function changeActivePlayer() {
         activePlayer = activePlayer === player1 ? player2 : player1;
-    };
-    const checkWinner = function (board, { col, row }) {
+    }
+    function checkWinner(board, { col, row }) {
         if (board.length === 3) {
             return checkWinner3x3(board);
         }
@@ -293,8 +293,8 @@ const game = (function () {
         }
 
         return { state: "play" };
-    };
-    const checkWinner3x3 = function (board) {
+    }
+    function checkWinner3x3(board) {
         /*https://editor.p5js.org/codingtrain/sketches/0zyUhZdJD*/
         function equals3(a, b, c) {
             return a == b && b == c && a != " ";
@@ -337,22 +337,22 @@ const game = (function () {
         } else {
             return winner;
         }
-    };
-    const render = function () {
+    }
+    function render() {
         console.clear();
         console.log("TIC-TAC-TOE!");
         console.log(`State: ${state}`);
         console.table(board);
-    };
-    const getBoard = function () {
+    }
+    function getBoard() {
         return board;
-    };
-    const getState = function () {
+    }
+    function getState() {
         return state;
-    };
-    const getActivePlayer = function () {
+    }
+    function getActivePlayer() {
         return activePlayer;
-    };
+    }
     function getEndGameMsg() {
         return endGameMsg;
     }
@@ -387,7 +387,7 @@ if (typeof window === "undefined") {
         const divPanel = document.querySelector("#panel");
         let cells = [];
 
-        const init = function () {
+        function init() {
             const board = game.getBoard();
             const rows = board.length;
             const cols = board[0].length;
@@ -401,7 +401,8 @@ if (typeof window === "undefined") {
                 cell.classList.add("cell");
                 cell.setAttribute("data-col", (i + cols - 1) % cols);
                 cell.setAttribute("data-row", Math.floor((i - 1) / cols));
-                cell.style.fontSize = `${70 / cols}em`;
+                cell.style.fontSize = `${1 / cols}em`;
+                cell.classList.add("interactable");
                 divGame.appendChild(cell);
             }
             cells = document.querySelectorAll(".cell");
@@ -416,8 +417,8 @@ if (typeof window === "undefined") {
                     player = game.play({ col, row }, true);
                 });
             });
-        };
-        const bindEvents = function () {
+        }
+        function bindEvents() {
             //PUBSUB
             events.on("boardChanged", render);
             events.on("win", endGameMsg);
@@ -434,8 +435,8 @@ if (typeof window === "undefined") {
             btnReset.addEventListener("click", () => {
                 reset();
             });
-        };
-        const render = function () {
+        }
+        function render() {
             game.render();
             const board = game.getBoard().flat();
             for (let i = 0; i < board.length; i++) {
@@ -443,7 +444,7 @@ if (typeof window === "undefined") {
                 if (cells[i].innerText)
                     cells[i].classList.add(cells[i].innerText);
             }
-        };
+        }
         function reset() {
             game.reset();
             const msgs = document.querySelectorAll(".msg");
